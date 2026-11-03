@@ -7,7 +7,8 @@
  *                             [--url http://localhost:4000] [--junit report.xml] [--html report.html]
  *   node cli/testforge.js list
  */
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 const { values, positionals } = parseArgs({
@@ -46,6 +47,7 @@ async function api(method, path, body) {
 async function download(path, file) {
   const res = await fetch(`${base}/api${path}`);
   if (!res.ok) throw new Error(`Could not download ${path}: ${res.status}`);
+  mkdirSync(dirname(resolve(file)), { recursive: true });
   writeFileSync(file, await res.text());
   console.log(`  report written to ${file}`);
 }
