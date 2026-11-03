@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Unit & integration tests
+        run: npm test
+
+      - name: Build UI
+        run: npm run build
+
+      - name: Start TestForge
+        run: |
+          SEED_DEMO_RUNS=0 npm start > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:4000/api/health && break; sleep 1; done
+
+      # Example of gating a pipeline on a TestForge suite.
+      - name: Run Smoke suite
+        run: node cli/testforge.js run --suite "Smoke" --junit reports/junit.xml --html reports/report.html
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testforge-reports
+          path: |
+            reports/
+            server.log

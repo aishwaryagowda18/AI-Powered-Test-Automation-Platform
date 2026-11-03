@@ -1,0 +1,15 @@
+node_modules/
+client/dist/
+data/
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.local
+reports/
+coverage/
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

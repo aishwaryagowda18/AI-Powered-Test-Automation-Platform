@@ -1,0 +1,46 @@
+{
+  "name": "testforge-ai",
+  "version": "1.0.0",
+  "description": "AI-powered test automation platform: author and run API & script tests, monitor execution live, and get AI root-cause analysis for failures.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "bin": {
+    "testforge": "cli/testforge.js"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n server,client -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "node --watch-path=server server/index.js",
+    "dev:client": "vite",
+    "build": "vite build",
+    "start": "node server/index.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "cli": "node cli/testforge.js",
+    "reset": "node server/reset.js"
+  },
+  "keywords": [
+    "test-automation",
+    "api-testing",
+    "qa",
+    "ai",
+    "claude",
+    "root-cause-analysis",
+    "dashboard"
+  ],
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.0",
+    "concurrently": "^10.0.0",
+    "lucide-react": "^1.66.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.0",
+    "recharts": "^3.2.0",
+    "vite": "^8.0.0"
+  }
+}
