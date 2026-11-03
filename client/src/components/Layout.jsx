@@ -87,7 +87,9 @@ export function Layout() {
   useEvents((e) => {
     if (e.type === 'run:created' || e.type === 'run:finished') refreshActive();
   });
-  useEffect(() => setNavOpen(false), [location.pathname]);
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
 
   const openLauncher = useCallback((preset = {}) => setLauncher(preset), []);
 

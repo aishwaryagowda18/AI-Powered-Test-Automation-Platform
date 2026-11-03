@@ -131,7 +131,9 @@ function RunnerSettings() {
   const { data, reload } = useFetch('/settings');
   const [form, setForm] = useState(null);
   const [saved, setSaved] = useState(false);
-  useEffect(() => data && setForm(data.settings), [data]);
+  useEffect(() => {
+    if (data) setForm(data.settings);
+  }, [data]);
 
   const save = async () => {
     try {
