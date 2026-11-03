@@ -25,28 +25,31 @@ export default function Settings() {
 function Environments() {
   const toast = useToast();
   const { data: envs, error, loading, reload } = useFetch('/environments');
-  const [selectedId, setSelectedId] = useState(null);
+  // The editor's draft is the single source of truth for which environment is selected.
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
 
+  const toDraft = (env) => ({ ...env, rows: Object.entries(env.variables).map(([key, value]) => ({ key, value })) });
+
+  // Keep the editor in sync with the server list: stay on the same environment
+  // when it still exists, keep an unsaved new one, otherwise show the default.
   useEffect(() => {
     if (!envs?.length) return;
-    const env = envs.find((e) => e.id === selectedId) ?? envs[0];
-    setSelectedId(env.id);
-    setDraft({ ...env, rows: Object.entries(env.variables).map(([key, value]) => ({ key, value })) });
-  }, [envs, selectedId]);
+    setDraft((current) => {
+      if (current && !current.id) return current;
+      const env = envs.find((e) => e.id === current?.id) ?? envs.find((e) => e.isDefault) ?? envs[0];
+      return toDraft(env);
+    });
+  }, [envs]);
 
   const save = async () => {
     setSaving(true);
     try {
       const body = { name: draft.name, isDefault: draft.isDefault, variables: Object.fromEntries(draft.rows.filter((r) => r.key.trim()).map((r) => [r.key.trim(), r.value])) };
-      if (draft.id) await api.put(`/environments/${draft.id}`, body);
-      else {
-        const created = await api.post('/environments', body);
-        setSelectedId(created.id);
-      }
-      toast.success('Environment saved', draft.name);
-      reload(true);
+      const saved = draft.id ? await api.put(`/environments/${draft.id}`, body) : await api.post('/environments', body);
+      setDraft(toDraft(saved));
+      toast.success('Environment saved', saved.name);
+      await reload(true);
     } catch (err) {
       toast.error('Save failed', err.message);
     } finally {
@@ -55,11 +58,16 @@ function Environments() {
   };
 
   const remove = async () => {
-    if (!window.confirm(`Delete environment "${draft.name}"?`)) return;
+    if (envs.length === 1) {
+      toast.error('Cannot delete', 'Keep at least one environment. Edit this one instead.');
+      return;
+    }
+    if (!window.confirm(`Delete environment "${draft.name}"? Tests and schedules that use it will fall back to the default environment.`)) return;
     try {
       await api.del(`/environments/${draft.id}`);
-      setSelectedId(null);
-      reload(true);
+      toast.success('Environment deleted', draft.name);
+      setDraft(null);
+      await reload(true);
     } catch (err) {
       toast.error('Delete failed', err.message);
     }
@@ -81,7 +89,7 @@ function Environments() {
       </div>
       <div className="row" style={{ marginBottom: 16, gap: 6 }}>
         {envs.map((e) => (
-          <button key={e.id} className={`btn btn-sm ${draft?.id === e.id ? 'btn-primary' : ''}`} onClick={() => setSelectedId(e.id)}>
+          <button key={e.id} className={`btn btn-sm ${draft?.id === e.id ? 'btn-primary' : ''}`} onClick={() => setDraft(toDraft(e))}>
             {e.isDefault && <Star size={12} />} {e.name}
           </button>
         ))}
@@ -175,7 +183,7 @@ function RunnerSettings() {
       <div className="row mt-16">
         <span className="spacer" />
         <button className="btn btn-primary btn-sm" onClick={save}>
-          {saved ? <Check size={13} /> : <Save size={13} />} {saved ? 'Saved' : 'Save'}
+          {saved ? <Check size={13} /> : <Save size={13} />} {saved ? 'Saved' : 'Save settings'}
         </button>
       </div>
     </div>
