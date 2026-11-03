@@ -1,6 +1,6 @@
 import { Layers, ListChecks, Loader2, Play, Rocket } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import { useToast } from '../lib/toast.jsx';
 import { Modal, TypeChip } from './ui.jsx';
@@ -10,6 +10,7 @@ import { Modal, TypeChip } from './ui.jsx';
  */
 export function RunModal({ preset = {}, onClose }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const [scope, setScope] = useState(preset.scope ?? (preset.testIds?.length ? 'selected' : preset.suiteId ? 'suite' : 'all'));
   const [suiteId, setSuiteId] = useState(preset.suiteId ?? '');
@@ -54,7 +55,8 @@ export function RunModal({ preset = {}, onClose }) {
       const run = await api.post('/runs', body);
       toast.success('Run started', `${run.name} · ${run.total} tests`);
       onClose();
-      navigate(`/runs/${run.id}`);
+      // On the Live monitor, stay put so the run can be watched streaming in.
+      if (location.pathname !== '/live') navigate(`/runs/${run.id}`);
     } catch (err) {
       toast.error('Could not start run', err.message);
     } finally {

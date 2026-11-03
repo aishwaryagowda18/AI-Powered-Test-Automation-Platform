@@ -280,23 +280,6 @@ pre,
   background: var(--primary);
   color: var(--primary-ink);
 }
-.sidebar-foot {
-  margin-top: auto;
-  padding: 14px;
-  border-radius: var(--r-lg);
-  background: linear-gradient(160deg, var(--primary-soft), transparent);
-  border: 1px solid var(--line);
-  font-size: 12.5px;
-  color: var(--ink-2);
-}
-.sidebar-foot strong {
-  display: block;
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 14px;
-  margin-bottom: 2px;
-}
-
 .main {
   min-width: 0;
   display: flex;
@@ -1628,4 +1611,59 @@ a.list-item:hover .cell-title {
 .diff-line-del {
   background: var(--critical-soft);
   color: var(--critical-ink);
+}
+
+/* ------------------------------------------------------- hero headline */
+.hero-headline {
+  display: grid;
+}
+.hero-headline-text {
+  grid-area: 1 / 1;
+  visibility: hidden;
+}
+.hero-headline-text.active {
+  visibility: visible;
+  animation: headline-in 0.6s ease both;
+}
+@keyframes headline-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-headline-text {
+    animation: none;
+  }
+}
+
+/* ------------------------------------- sidebar AI warning (only on errors) */
+.sidebar-alert {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--r-lg);
+  background: var(--warning-soft);
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.sidebar-alert:hover {
+  text-decoration: none;
+  border-color: var(--warning);
+}
+.sidebar-alert svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--warning-ink);
+}
+.sidebar-alert strong {
+  display: block;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  margin-bottom: 2px;
 }

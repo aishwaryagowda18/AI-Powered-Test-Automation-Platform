@@ -1,4 +1,5 @@
 import { Activity, ArrowRight, CheckCircle2, Clock, FlaskConical, Play, Plus, Shuffle, Sparkles, TrendingDown, TrendingUp, XCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PassRateChart, ResultsStackChart } from '../components/charts.jsx';
 import { usePageMeta, useRunLauncher } from '../components/Layout.jsx';
@@ -28,9 +29,7 @@ export default function Dashboard() {
           <span className="eyebrow">
             <Sparkles size={13} /> AI-powered test automation
           </span>
-          <h2>
-            Ship with confidence. <span className="grad">Know why tests fail.</span>
-          </h2>
+          <HeroHeadline />
           <p>
             {kpis.totalRuns
               ? `${kpis.totalTests} test cases, ${kpis.totalRuns} runs recorded. Failures get an automatic root-cause diagnosis and suggested fixes.`
@@ -261,5 +260,33 @@ export default function Dashboard() {
         </div>
       </div>
     </>
+  );
+}
+
+const HEADLINES = [
+  ['Stop guessing why tests fail.', 'Let AI tell you.'],
+  ['From red build to root cause', 'in seconds.'],
+  ['Tests that write themselves.', 'Failures that explain themselves.'],
+  ['Catch every regression.', 'Fix it in one click.'],
+];
+
+/** Hero headline that cycles through the product's promises (static when reduced motion is preferred). */
+function HeroHeadline() {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const id = setInterval(() => setIndex((i) => (i + 1) % HEADLINES.length), 5000);
+    return () => clearInterval(id);
+  }, []);
+  // All headlines share one grid cell, so the heading is as tall as the longest
+  // one at the current width: no empty gap and no layout jump while rotating.
+  return (
+    <h2 className="hero-headline">
+      {HEADLINES.map(([lead, accent], i) => (
+        <span key={i === index ? `active-${index}` : i} className={`hero-headline-text${i === index ? ' active' : ''}`} aria-hidden={i !== index}>
+          {lead} <span className="grad">{accent}</span>
+        </span>
+      ))}
+    </h2>
   );
 }

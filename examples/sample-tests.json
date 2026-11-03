@@ -1,0 +1,295 @@
+{
+  "version": 1,
+  "tests": [
+    {
+      "name": "Get product list",
+      "type": "http",
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/products",
+        "assertions": [
+          {
+            "type": "status",
+            "operator": "equals",
+            "expected": "200",
+            "target": ""
+          },
+          {
+            "type": "jsonPath",
+            "target": "data",
+            "operator": "isType",
+            "expected": "array"
+          },
+          {
+            "type": "jsonPath",
+            "target": "total",
+            "operator": "equals",
+            "expected": "4"
+          },
+          {
+            "type": "responseTime",
+            "operator": "lessThan",
+            "expected": "1000",
+            "target": ""
+          }
+        ]
+      },
+      "suite": "Sample tests",
+      "tags": [
+        "sample"
+      ],
+      "priority": "medium"
+    },
+    {
+      "name": "Filter products by category",
+      "type": "http",
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/products",
+        "query": [
+          {
+            "key": "category",
+            "value": "displays"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status",
+            "operator": "equals",
+            "expected": "200",
+            "target": ""
+          },
+          {
+            "type": "jsonPath",
+            "target": "total",
+            "operator": "equals",
+            "expected": "1"
+          },
+          {
+            "type": "jsonPath",
+            "target": "data[0].sku",
+            "operator": "equals",
+            "expected": "MN-27"
+          }
+        ]
+      },
+      "suite": "Sample tests",
+      "tags": [
+        "sample"
+      ],
+      "priority": "medium"
+    },
+    {
+      "name": "Create a new user",
+      "type": "http",
+      "config": {
+        "method": "POST",
+        "url": "{{baseUrl}}/users",
+        "bodyType": "json",
+        "body": "{\n  \"name\": \"Test User {{$randomInt}}\",\n  \"email\": \"user{{$timestamp}}@example.com\",\n  \"role\": \"member\"\n}",
+        "assertions": [
+          {
+            "type": "status",
+            "operator": "equals",
+            "expected": "201",
+            "target": ""
+          },
+          {
+            "type": "jsonPath",
+            "target": "id",
+            "operator": "exists",
+            "expected": ""
+          },
+          {
+            "type": "jsonPath",
+            "target": "role",
+            "operator": "equals",
+            "expected": "member"
+          },
+          {
+            "type": "header",
+            "target": "location",
+            "operator": "contains",
+            "expected": "/demo-api/users/"
+          }
+        ]
+      },
+      "suite": "Sample tests",
+      "tags": [
+        "sample"
+      ],
+      "priority": "medium"
+    },
+    {
+      "name": "Create user without name is rejected",
+      "type": "http",
+      "config": {
+        "method": "POST",
+        "url": "{{baseUrl}}/users",
+        "bodyType": "json",
+        "body": "{ \"email\": \"noname@example.com\" }",
+        "assertions": [
+          {
+            "type": "status",
+            "operator": "equals",
+            "expected": "400",
+            "target": ""
+          },
+          {
+            "type": "jsonPath",
+            "target": "details[0].field",
+            "operator": "equals",
+            "expected": "name"
+          },
+          {
+            "type": "jsonPath",
+            "target": "error",
+            "operator": "equals",
+            "expected": "Validation failed"
+          }
+        ]
+      },
+      "suite": "Sample tests",
+      "tags": [
+        "sample"
+      ],
+      "priority": "medium"
+    },
+    {
+      "name": "Orders contain a shipped order (uses {{token}})",
+      "type": "http",
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/orders",
+        "headers": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status",
+            "operator": "equals",
+            "expected": "200",
+            "target": ""
+          },
+          {
+            "type": "jsonPath",
+            "target": "data[0].status",
+            "operator": "equals",
+            "expected": "shipped"
+          },
+          {
+            "type": "jsonPath",
+            "target": "data",
+            "operator": "isType",
+            "expected": "array"
+          }
+        ]
+      },
+      "suite": "Sample tests",
+      "tags": [
+        "sample"
+      ],
+      "priority": "medium"
+    },
+    {
+      "name": "Products per category (data-driven)",
+      "type": "http",
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/products",
+        "query": [
+          {
+            "key": "category",
+            "value": "{{category}}"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status",
+            "operator": "equals",
+            "expected": "200",
+            "target": ""
+          },
+          {
+            "type": "jsonPath",
+            "target": "total",
+            "operator": "equals",
+            "expected": "{{expectedTotal}}"
+          }
+        ],
+        "dataset": {
+          "content": "category,expectedTotal\nperipherals,2\ndisplays,1\naccessories,1\ngames,0"
+        }
+      },
+      "suite": "Sample tests",
+      "tags": [
+        "sample"
+      ],
+      "priority": "medium"
+    },
+    {
+      "name": "Search returns results quickly",
+      "type": "http",
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/search",
+        "query": [
+          {
+            "key": "q",
+            "value": "keyboard"
+          },
+          {
+            "key": "delay",
+            "value": "100"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status",
+            "operator": "equals",
+            "expected": "200",
+            "target": ""
+          },
+          {
+            "type": "jsonPath",
+            "target": "query",
+            "operator": "equals",
+            "expected": "keyboard"
+          },
+          {
+            "type": "jsonPath",
+            "target": "results",
+            "operator": "isType",
+            "expected": "array"
+          },
+          {
+            "type": "responseTime",
+            "operator": "lessThan",
+            "expected": "1000",
+            "target": ""
+          }
+        ]
+      },
+      "suite": "Sample tests",
+      "tags": [
+        "sample"
+      ],
+      "priority": "medium"
+    },
+    {
+      "name": "Every user has a valid email and role (script)",
+      "type": "script",
+      "config": {
+        "code": "const res = await http.get(`${vars.baseUrl}/users`);\nexpect(res.status, 'status').toBe(200);\nexpect(res.json.data, 'users').toHaveLength(5);\n\nconst roles = ['admin', 'member', 'viewer'];\nfor (const user of res.json.data) {\n  expect(user.email, `${user.name} email`).toMatch(/^[^@]+@example\\.com$/);\n  assert(roles.includes(user.role), `${user.name} has a known role`);\n}\nlog('Checked', res.json.data.length, 'users');"
+      },
+      "suite": "Sample tests",
+      "tags": [
+        "sample"
+      ],
+      "priority": "medium"
+    }
+  ]
+}

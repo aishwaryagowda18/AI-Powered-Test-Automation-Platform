@@ -1,5 +1,6 @@
 import {
   Activity,
+  AlertTriangle,
   BarChart3,
   CalendarClock,
   FlaskConical,
@@ -84,8 +85,9 @@ export function Layout() {
       .catch(() => {});
   }, []);
   useEffect(refreshActive, [refreshActive]);
+  // Re-check after AI work too, so a failing provider (quota, bad key) shows up promptly.
   useEvents((e) => {
-    if (e.type === 'run:created' || e.type === 'run:finished') refreshActive();
+    if (['run:created', 'run:finished', 'analysis:updated', 'run-analysis:updated'].includes(e.type)) refreshActive();
   });
   useEffect(() => {
     setNavOpen(false);
@@ -122,14 +124,15 @@ export function Layout() {
                 ),
               )}
             </nav>
-            <div className="sidebar-foot">
-              <strong>{!ai?.enabled ? 'Heuristic analysis' : ai.lastError ? `${ai.providerLabel} unavailable` : `${ai.providerLabel} AI on`}</strong>
-              {!ai?.enabled
-                ? 'Add a GEMINI_API_KEY to unlock AI root-cause analysis, test generation and fixes.'
-                : ai.lastError
-                  ? `${ai.lastError} Using heuristic analysis meanwhile.`
-                  : `Failures are diagnosed by ${ai.model}.`}
-            </div>
+            {ai?.enabled && ai.lastError && (
+              <NavLink to="/settings" className="sidebar-alert" role="status">
+                <AlertTriangle size={16} />
+                <span>
+                  <strong>{ai.providerLabel} unavailable</strong>
+                  {ai.lastError.length > 140 ? `${ai.lastError.slice(0, 140)}…` : ai.lastError} Using heuristic analysis meanwhile.
+                </span>
+              </NavLink>
+            )}
           </aside>
 
           <div className="main">

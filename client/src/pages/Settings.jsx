@@ -83,8 +83,8 @@ function Environments() {
         <h3>Environments</h3>
         <span className="sub">Variables referenced as {'{{name}}'} in tests</span>
         <span className="spacer" />
-        <button className="btn btn-sm" onClick={() => setDraft({ name: 'New environment', isDefault: false, rows: [{ key: 'baseUrl', value: '' }] })}>
-          <Plus size={13} /> Add
+        <button className="btn btn-sm btn-dark" onClick={() => setDraft({ name: 'New environment', isDefault: false, rows: [{ key: 'baseUrl', value: '' }] })}>
+          <Plus size={13} /> New environment
         </button>
       </div>
       <div className="row" style={{ marginBottom: 16, gap: 6 }}>

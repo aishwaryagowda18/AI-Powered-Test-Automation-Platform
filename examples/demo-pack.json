@@ -1,0 +1,199 @@
+{
+  "version": 1,
+  "tests": [
+    {
+      "name": "Health check is OK",
+      "description": "The demo API is up and reports its version.",
+      "type": "http",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "smoke"],
+      "priority": "high",
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health",
+        "assertions": [
+          { "type": "status", "operator": "equals", "expected": "200", "target": "" },
+          { "type": "jsonPath", "target": "status", "operator": "equals", "expected": "ok" },
+          { "type": "jsonPath", "target": "version", "operator": "exists", "expected": "" }
+        ]
+      }
+    },
+    {
+      "name": "Get user Ada by id",
+      "description": "User 1 is Ada Lovelace, an admin.",
+      "type": "http",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "users"],
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/users/1",
+        "assertions": [
+          { "type": "status", "operator": "equals", "expected": "200", "target": "" },
+          { "type": "jsonPath", "target": "name", "operator": "equals", "expected": "Ada Lovelace" },
+          { "type": "jsonPath", "target": "role", "operator": "equals", "expected": "admin" }
+        ]
+      }
+    },
+    {
+      "name": "Unknown user returns 404",
+      "description": "Negative test: a user that does not exist.",
+      "type": "http",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "users", "negative"],
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/users/9999",
+        "assertions": [
+          { "type": "status", "operator": "equals", "expected": "404", "target": "" },
+          { "type": "jsonPath", "target": "error", "operator": "contains", "expected": "not found" }
+        ]
+      }
+    },
+    {
+      "name": "Filter peripherals",
+      "description": "Query parameter: only peripherals are returned.",
+      "type": "http",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "products"],
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/products",
+        "query": [{ "key": "category", "value": "peripherals" }],
+        "assertions": [
+          { "type": "status", "operator": "equals", "expected": "200", "target": "" },
+          { "type": "jsonPath", "target": "total", "operator": "equals", "expected": "2" },
+          { "type": "jsonPath", "target": "data[0].category", "operator": "equals", "expected": "peripherals" }
+        ]
+      }
+    },
+    {
+      "name": "Search is fast",
+      "description": "Performance check: search answers in under 1 second.",
+      "type": "http",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "performance"],
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/search",
+        "query": [
+          { "key": "q", "value": "mouse" },
+          { "key": "delay", "value": "50" }
+        ],
+        "assertions": [
+          { "type": "status", "operator": "equals", "expected": "200", "target": "" },
+          { "type": "jsonPath", "target": "query", "operator": "equals", "expected": "mouse" },
+          { "type": "responseTime", "operator": "lessThan", "expected": "1000", "target": "" }
+        ]
+      }
+    },
+    {
+      "name": "Login rejects wrong password",
+      "description": "Negative test: bad credentials get 401.",
+      "type": "http",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "auth", "negative"],
+      "config": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "bodyType": "json",
+        "body": "{ \"username\": \"{{username}}\", \"password\": \"not-the-password\" }",
+        "assertions": [
+          { "type": "status", "operator": "equals", "expected": "401", "target": "" },
+          { "type": "jsonPath", "target": "error", "operator": "equals", "expected": "Invalid credentials" }
+        ]
+      }
+    },
+    {
+      "name": "Login and capture token",
+      "description": "Chaining: saves the token as {{demoToken}} for later tests.",
+      "type": "http",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "auth", "chained"],
+      "priority": "high",
+      "config": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "bodyType": "json",
+        "body": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+        "assertions": [
+          { "type": "status", "operator": "equals", "expected": "200", "target": "" },
+          { "type": "jsonPath", "target": "token", "operator": "exists", "expected": "" }
+        ],
+        "extract": [{ "variable": "demoToken", "from": "jsonPath", "path": "token" }]
+      }
+    },
+    {
+      "name": "Orders without token are blocked",
+      "description": "Negative test: no Authorization header gets 401.",
+      "type": "http",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "auth", "negative"],
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/orders",
+        "assertions": [{ "type": "status", "operator": "equals", "expected": "401", "target": "" }]
+      }
+    },
+    {
+      "name": "Orders with captured token",
+      "description": "Chaining: uses {{demoToken}} from \"Login and capture token\" (runs after it automatically).",
+      "type": "http",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "auth", "chained"],
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/orders",
+        "headers": [{ "key": "Authorization", "value": "Bearer {{demoToken}}" }],
+        "assertions": [
+          { "type": "status", "operator": "equals", "expected": "200", "target": "" },
+          { "type": "jsonPath", "target": "data.length", "operator": "equals", "expected": "2" },
+          { "type": "jsonPath", "target": "data[0].id", "operator": "equals", "expected": "ORD-1001" }
+        ]
+      }
+    },
+    {
+      "name": "User emails by id (data-driven)",
+      "description": "Runs once per row: each user has the expected email.",
+      "type": "http",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "users", "data-driven"],
+      "config": {
+        "method": "GET",
+        "url": "{{baseUrl}}/users/{{id}}",
+        "assertions": [
+          { "type": "status", "operator": "equals", "expected": "200", "target": "" },
+          { "type": "jsonPath", "target": "email", "operator": "equals", "expected": "{{email}}" }
+        ],
+        "dataset": { "content": "id,email\n2,alan@example.com\n3,grace@example.com\n4,katherine@example.com" }
+      }
+    },
+    {
+      "name": "Invalid users are rejected (data-driven)",
+      "description": "Negative tests from a table: each bad payload fails validation on the right field.",
+      "type": "http",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "users", "negative", "data-driven"],
+      "config": {
+        "method": "POST",
+        "url": "{{baseUrl}}/users",
+        "bodyType": "json",
+        "body": "{ \"name\": \"{{name}}\", \"email\": \"{{email}}\" }",
+        "assertions": [
+          { "type": "status", "operator": "equals", "expected": "400", "target": "" },
+          { "type": "jsonPath", "target": "details[0].field", "operator": "equals", "expected": "{{badField}}" }
+        ],
+        "dataset": { "content": "name,email,badField\n,valid@example.com,name\nBob,not-an-email,email\nCarol,,email" }
+      }
+    },
+    {
+      "name": "Product prices are positive (script)",
+      "description": "Script test: every in-stock product has a price above zero.",
+      "type": "script",
+      "suite": "Demo pack",
+      "tags": ["demo-pack", "products", "script"],
+      "config": {
+        "code": "const res = await http.get(`${vars.baseUrl}/products`);\nexpect(res.status, 'status').toBe(200);\n\nconst inStock = res.json.data.filter((p) => p.stock > 0);\nlog(`${inStock.length} of ${res.json.data.length} products are in stock`);\n\nfor (const p of inStock) {\n  expect(p.price, `${p.sku} price`).toBeGreaterThan(0);\n}"
+      }
+    }
+  ]
+}
